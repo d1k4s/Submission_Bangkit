@@ -4,7 +4,7 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import datetime
 
-all_data = pd.read_csv("main_data.csv")
+all_data = pd.read_csv(".\Dashboard\main_data.csv")
 
 st.header("Air Quality Analysis Data Statistic")
 
