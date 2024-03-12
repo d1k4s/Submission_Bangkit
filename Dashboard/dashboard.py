@@ -1,123 +1,104 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pylab as plt
-import seaborn as sns
 import datetime
 
-all_data = pd.read_csv("Dashboard/main_data.csv")
+all_records = pd.read_csv("Dashboard/main_data.csv")
 
 st.header("Air Quality Analysis Data Statistic")
 
 with st.container():
-    all_data['datetime'] = pd.to_datetime(all_data['datetime'])
+    all_records['timestamp'] = pd.to_datetime(all_records['datetime'])
 
-    # Extract minimum and maximum dates from the dataset
-    min_date = all_data['datetime'].min().date()
-    max_date = all_data['datetime'].max().date()
+    # Extract minimum and maximum timestamps from the dataset
+    min_timestamp = all_records['timestamp'].min().date()
+    max_timestamp = all_records['timestamp'].max().date()
     # Date picker for start date
-    start_date = st.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
+    start_timestamp = st.date_input("Start Date", min_value=min_timestamp, max_value=max_timestamp, value=min_timestamp)
 
     # Date picker for end date
-    end_date = st.date_input("End Date", min_value=min_date, max_value=max_date, value=max_date)
+    end_timestamp = st.date_input("End Date", min_value=min_timestamp, max_value=max_timestamp, value=max_timestamp)
 
-clean_combined_df = all_data[(all_data['datetime'] >= pd.to_datetime(start_date)) & (all_data['datetime'] <= pd.to_datetime(end_date))]
+clean_data = all_records[(all_records['timestamp'] >= pd.to_datetime(start_timestamp)) & (all_records['timestamp'] <= pd.to_datetime(end_timestamp))]
 
-st.subheader(f"Analysis from {start_date} to {end_date} at Multiple Stations")
+st.subheader(f"Analysis from {start_timestamp} to {end_timestamp} at Multiple Locations")
 
 with st.container():
-    average_pm25_each_station = clean_combined_df.groupby('station')['PM2.5'].mean()
-    max_pm25_station = average_pm25_each_station.idxmax()
-    min_pm25_station = average_pm25_each_station.idxmin()
+    average_pm25_each_location = clean_data.groupby('station')['PM2.5'].mean()
+    max_pm25_location = average_pm25_each_location.idxmax()
+    min_pm25_location = average_pm25_each_location.idxmin()
 
-    plt.figure(figsize=(18, 8))
-    bars = plt.bar(x=average_pm25_each_station.keys(), height=average_pm25_each_station.values)
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(x=average_pm25_each_location.keys(), height=average_pm25_each_location.values)
 
     for bar in bars:
-        if bar.get_height() == average_pm25_each_station[max_pm25_station]:
+        if bar.get_height() == average_pm25_each_location[max_pm25_location]:
             bar.set_color('red')  # Color max red
-        elif bar.get_height() == average_pm25_each_station[min_pm25_station]:
+        elif bar.get_height() == average_pm25_each_location[min_pm25_location]:
             bar.set_color('green')  # Color min green
 
-    plt.xlabel('Stations')
+    plt.xlabel('Locations')
     plt.ylabel('PM2.5')
-    plt.title('Average PM2.5 Level per Station from 2013 to 2017')
+    plt.title('Average PM2.5 Level per Location from 2013 to 2017')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
 
-    average_pm25_each_station = {station: pm25 for station, pm25 in average_pm25_each_station.items() if pm25 is not None}
+    average_pm25_each_location = {location: pm25 for location, pm25 in average_pm25_each_location.items() if pm25 is not None}
 
-    # Divide the six columns
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    # Divide the six sections
+    sec1, sec2, sec3, sec4, sec5, sec6 = st.columns(6)
 
-    # List of all columns
-    columns = [col1, col2, col3, col4, col5, col6]
+    # List of all sections
+    sections = [sec1, sec2, sec3, sec4, sec5, sec6]
 
     # Get the the smallest and largest 
-    min_station = min(average_pm25_each_station, key=average_pm25_each_station.get)
-    max_station = max(average_pm25_each_station, key=average_pm25_each_station.get)
+    min_location = min(average_pm25_each_location, key=average_pm25_each_location.get)
+    max_location = max(average_pm25_each_location, key=average_pm25_each_location.get)
 
     # Iterate over the keys and values 
-    for i, (station, pm25) in enumerate(average_pm25_each_station.items()):
+    for i, (location, pm25) in enumerate(average_pm25_each_location.items()):
         # Format after the decimal point
         pm25_formatted = "{:.2f}".format(pm25)
 
-        # Write station name 
-        with columns[i % len(columns)]:
-            if station == min_station:
-                st.metric(label=f"{station}", value=pm25_formatted, delta="min", delta_color="normal")
-            elif station == max_station:
-                st.metric(label=f"{station}", value=pm25_formatted, delta="max", delta_color="inverse")
+        # Write location name 
+        with sections[i % len(sections)]:
+            if location == min_location:
+                st.metric(label=f"{location}", value=pm25_formatted, delta="min", delta_color="normal")
+            elif location == max_location:
+                st.metric(label=f"{location}", value=pm25_formatted, delta="max", delta_color="inverse")
             else:
-                st.metric(label=station, value=pm25_formatted)
+                st.metric(label=location, value=pm25_formatted)
 
     st.pyplot(plt)
 
-st.subheader("Corelation between PM10 and CO")
+ 
+st.subheader("Comparison of NO2 Levels Each Months")
 with st.container():
-    mean_PM10_monthly = clean_combined_df.groupby(['year', 'month'])['PM10'].mean()
-    mean_CO_monthly = clean_combined_df.groupby(['year', 'month'])['CO'].mean()
+    mean_natrium_dioxide = clean_data.groupby(['year', 'month'])['NO2'].mean()
+    mean_natrium_dioxide_dict = mean_natrium_dioxide.to_dict()  
+    rain_months = [1, 2, 3, 4, 5, 6]
+    dry_months = [7, 8, 9, 10, 11, 12]
 
-    col1, col2 = st.columns(2)
+    dry_NO2_levels = {}
+    rain_NO2_levels = {}
 
-    with col1:
-        st.metric(label="Average PM10", value="{:.2f}".format(mean_PM10_monthly.mean()))
-
-    with col2:
-        st.metric(label="Average CO", value="{:.2f}".format(mean_CO_monthly.mean()))
-
-    with st.container():
-        plt.figure(figsize=(12, 8))
-        sns.regplot(x=mean_PM10_monthly.values, y=mean_CO_monthly.values)
-        plt.xlabel("PM10 levels")
-        plt.ylabel("CO levels")
-        st.pyplot(plt)
-
-st.subheader("Comparison of SO2 Levels Between Rain and Dry Months")
-with st.container():
-    mean_SO2 = clean_combined_df.groupby(['year', 'month'])['SO2'].mean()
-    mean_SO2_dict = mean_SO2.to_dict()  
-    rain_month = [6,7,8]
-    dry_mount = [11,12,1,2]
-
-    dry_SO2 = {}
-    rain_SO2 = {}
-
-    for key, value in mean_SO2_dict.items():
-        if key[1] in dry_mount:
-            dry_SO2[key] = value
-        elif key[1] in rain_month:
-            rain_SO2[key] = value
+    for key, value in mean_natrium_dioxide_dict.items():
+        if key[1] in dry_months:
+            dry_NO2_levels[key] = value
+        elif key[1] in rain_months:
+            rain_NO2_levels[key] = value
 
     # Convert the keys to datetime objects
-    dry_dates = [datetime.datetime(year, month, 1) for year, month in dry_SO2.keys()]
-    rain_dates = [datetime.datetime(year, month, 1) for year, month in rain_SO2.keys()]
+    dry_dates = [datetime.datetime(year, month, 1) for year, month in dry_NO2_levels.keys()]
+    rain_dates = [datetime.datetime(year, month, 1) for year, month in rain_NO2_levels.keys()]
 
     # Create a new figure
-    plt.figure(figsize=(16,8))
+    plt.figure(figsize=(12, 6))
 
-    # Plot rain_SO2 and rain_SO2
-    plt.bar(rain_dates, list(rain_SO2.values()), label='Rain SO2',width=20)
-    plt.bar(dry_dates, list(dry_SO2.values()), label='Dry SO2',width=20)
+    # Plot rain_SO2_levels and dry_SO2_levels
+    plt.bar(rain_dates, list(rain_NO2_levels.values()), label='Rain NO2', width=20)
+    plt.bar(dry_dates, list(dry_NO2_levels.values()), label='Dry NO2', width=20)
+    plt.xticks(rotation=45, ha='right')
 
     # Add a legend
     plt.legend()
