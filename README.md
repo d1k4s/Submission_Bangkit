@@ -17,5 +17,5 @@ streamlit run dashboard.py
 ### go dirrectory or run this
 
 ```
-streamlit run Dasboard/dashboard.py
+streamlit run Dashboard/dashboard.py
 ```
